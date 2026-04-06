@@ -58,18 +58,38 @@ public class VisualizationService {
                 .bodyToMono(Map.class)
                 .map(response -> {
                     List<Map<String, Object>> tree = (List<Map<String, Object>>) response.get("tree");
-                    if (tree == null) return List.<String>of();
-                    
-                    return tree.stream()
+                    if (tree == null) {
+                        System.out.println("[Visualizer] Tree response was null for " + owner + "/" + repo + " branch: " + branch);
+                        return List.<String>of();
+                    }
+                    System.out.println("[Visualizer] Tree has " + tree.size() + " items for " + owner + "/" + repo + " branch: " + branch);
+
+                    java.util.Set<String> validExtensions = java.util.Set.of(
+                        ".js", ".jsx", ".ts", ".tsx", ".py", ".go", ".rs", ".java",
+                        ".c", ".cpp", ".h", ".hpp", ".cs", ".php", ".rb", ".swift",
+                        ".kt", ".dart", ".json", ".yaml", ".yml", ".toml", ".xml",
+                        ".html", ".css"
+                    );
+
+                    List<String> result = tree.stream()
                             .filter(item -> "blob".equals(item.get("type")))
                             .map(item -> (String) item.get("path"))
-                            .filter(path -> path != null && path.matches(".*\\.(js|jsx|ts|tsx|py|go|rs|java|c|cpp|h|hpp|cs|php|rb|swift|kt|dart|json|yaml|yml|toml|xml|html|css)") &&
-                                    !path.contains("node_modules") &&
-                                    !path.contains("dist/") &&
-                                    !path.contains("build/") &&
-                                    !path.startsWith("."))
+                            .filter(path -> {
+                                if (path == null) return false;
+                                if (path.contains("node_modules")) return false;
+                                if (path.contains("dist/")) return false;
+                                if (path.contains("build/")) return false;
+                                if (path.startsWith(".")) return false;
+                                int dotIndex = path.lastIndexOf('.');
+                                if (dotIndex < 0) return false;
+                                String ext = path.substring(dotIndex).toLowerCase();
+                                return validExtensions.contains(ext);
+                            })
                             .limit(150)
                             .collect(Collectors.toList());
+
+                    System.out.println("[Visualizer] Filtered to " + result.size() + " code files");
+                    return result;
                 });
     }
 
