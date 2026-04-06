@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -115,6 +117,7 @@ public class VisualizationService {
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(Map.class)
+                .timeout(Duration.ofSeconds(90))
                 .map(response -> {
                     try {
                         List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
