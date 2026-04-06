@@ -5,6 +5,7 @@ import ActivityTimeline from '../components/ActivityTimeline';
 import RepoInsights from '../components/RepoInsights';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import SearchHistory from '../components/SearchHistory';
+import { fetchRepoFileTree, generateInfographic } from '../services/visualizerService';
 
 const HISTORY_KEY = 'gh-analyzer-history';
 
@@ -26,6 +27,9 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [errorType, setErrorType] = useState(''); // '404', 'rate', 'validation', 'generic'
+    const [visualizations, setVisualizations] = useState([]);
+    const [visualizingRepo, setVisualizingRepo] = useState(null);
+    const [generationCount, setGenerationCount] = useState(() => parseInt(sessionStorage.getItem('viz-count') || '0'));
     const [sortOrder, setSortOrder] = useState('Stars');
     const [filterLang, setFilterLang] = useState('All');
     const [searchHistory, setSearchHistory] = useState([]);
@@ -57,6 +61,49 @@ const Dashboard = () => {
     const clearHistory = () => {
         setSearchHistory([]);
         localStorage.removeItem(HISTORY_KEY);
+    };
+
+    const handleVisualize = async (e, repoName) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (generationCount >= 3) {
+            alert("You have reached the maximum limit of 3 visualisations per session.");
+            return;
+        }
+        
+        if (visualizingRepo === repoName) return;
+        
+        setVisualizingRepo(repoName);
+        try {
+            const fileTree = await fetchRepoFileTree(githubUser.login, repoName);
+            if (fileTree.length === 0) throw new Error('No files found suitable for analysis.');
+            const imageBase64 = await generateInfographic(repoName, fileTree);
+            
+            if (imageBase64) {
+                setGenerationCount(prev => {
+                    const newCount = prev + 1;
+                    sessionStorage.setItem('viz-count', newCount.toString());
+                    return newCount;
+                });
+                
+                setVisualizations(prev => {
+                    const newViz = { repoName, image: `data:image/png;base64,${imageBase64}`, id: Date.now() };
+                    return [newViz, ...prev];
+                });
+                
+                setTimeout(() => {
+                    document.getElementById('visualisations-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            } else {
+                throw new Error("Failed to generate image.");
+            }
+        } catch (err) {
+            console.error("Visualization error: ", err);
+            alert("Failed to generate visualisation: " + err.message);
+        } finally {
+            setVisualizingRepo(null);
+        }
     };
 
     const triggerSearch = async (searchName) => {
@@ -145,7 +192,7 @@ const Dashboard = () => {
                 <h1 style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.5rem' }}>⚙</span>
                     <span style={{ background: 'linear-gradient(135deg, var(--accent-color), var(--accent-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                        GitHub Analyzer
+                        GitHub Analyzer & visualizer
                     </span>
                 </h1>
             </header>
@@ -164,7 +211,7 @@ const Dashboard = () => {
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent'
                 }}>
-                    Analyze GitHub Profiles
+                    Analyze GitHub Profiles & visualizer
                 </h2>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '2.5rem', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto 2.5rem' }}>
                     Enter a username to unlock deep insights into any developer's portfolio.
@@ -289,6 +336,25 @@ const Dashboard = () => {
                     {/* Analysis Section */}
                     <AnalysisSection repos={repos} />
 
+                    {/* Visualisations Section */}
+                    {visualizations.length > 0 && (
+                        <div id="visualisations-section" className="animate-fade-in-up" style={{ marginBottom: '2.5rem' }}>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                🎨 Generated Visualisations
+                            </h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                                {visualizations.map((viz) => (
+                                    <div key={viz.id} className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <h4 style={{ fontWeight: '600', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{viz.repoName}</h4>
+                                        <div style={{ borderRadius: '0.5rem', overflow: 'hidden', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
+                                            <img src={viz.image} alt="Visualisation" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Repos Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                         <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>
@@ -358,6 +424,15 @@ const Dashboard = () => {
                                         <span style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', opacity: 0.7 }}>
                                             {formatDate(repo.updated_at)}
                                         </span>
+                                    </div>
+                                    <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
+                                        <button 
+                                            onClick={(e) => handleVisualize(e, repo.name)} 
+                                            disabled={visualizingRepo === repo.name}
+                                            style={{ background: 'rgba(99, 102, 241, 0.15)', color: 'var(--accent-color)', border: '1px solid rgba(99,102,241,0.3)', padding: '0.3rem 0.6rem', borderRadius: '0.3rem', fontSize: '0.75rem', cursor: visualizingRepo === repo.name ? 'progress' : 'pointer', transition: 'all 0.2s ease', fontWeight: 'bold', opacity: visualizingRepo === repo.name ? 0.7 : 1 }}
+                                        >
+                                            {visualizingRepo === repo.name ? '⏳ Visualising...' : '👁️ Visualise'}
+                                        </button>
                                     </div>
                                 </div>
                             </a>
