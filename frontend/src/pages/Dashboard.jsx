@@ -5,7 +5,6 @@ import ActivityTimeline from '../components/ActivityTimeline';
 import RepoInsights from '../components/RepoInsights';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import SearchHistory from '../components/SearchHistory';
-import { fetchRepoFileTree, generateInfographic } from '../services/visualizerService';
 
 const HISTORY_KEY = 'gh-analyzer-history';
 
@@ -76,9 +75,8 @@ const Dashboard = () => {
         
         setVisualizingRepo(repoName);
         try {
-            const fileTree = await fetchRepoFileTree(githubUser.login, repoName);
-            if (fileTree.length === 0) throw new Error('No files found suitable for analysis.');
-            const imageBase64 = await generateInfographic(repoName, fileTree);
+            const response = await api.get(`/visualize/${githubUser.login}/${repoName}`);
+            const imageBase64 = response.data.image;
             
             if (imageBase64) {
                 setGenerationCount(prev => {

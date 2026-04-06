@@ -9,6 +9,7 @@ It uses a dual-architecture approach, with a highly optimized React frontend and
 - **Profile Search**: Clean, intuitive search interface to look up any GitHub username.
 - **Detailed User Insights**: Displays follower counts, following, public repositories, and key profile stats.
 - **Repository List**: Dynamically pulls the user's latest repositories, showing descriptions, stars, forks, and programming languages used.
+- **AI Repository Visualization**: Generates beautiful neon cyberpunk data flow diagrams of any repository's architecture using Google's Gemini AI.
 - **Bypass Browser Restrictions**: The backend acts as a proxy to the GitHub API, completely avoiding frontend CORS issues and allowing strict rate-limit management.
 - **Stateless Architecture**: Zero database required. The application strictly queries real-time data from GitHub, keeping the infrastructure lightweight and fast.
 - **Optimized for the Cloud**: Designed to be deployed seamlessly to Firebase Hosting (Frontend) and Google Cloud Run (Backend), with alternative support for Vercel/Render.
@@ -42,7 +43,9 @@ It uses a dual-architecture approach, with a highly optimized React frontend and
 graph LR
     Client[React Frontend] -->|REST API Request| Proxy[Spring Boot Backend]
     Proxy -->|GitHub API via WebClient| GitHub[(GitHub Servers)]
+    Proxy -->|GenAI Payload via WebClient| Gemini[(Google Gemini AI)]
     GitHub -.->|User & Repo Data| Proxy
+    Gemini -.->|Base64 Image| Proxy
     Proxy -.->|Sanitized JSON Response| Client
 ```
 
@@ -116,7 +119,8 @@ Github-repo-analyzer/
 
 **1. Start the Backend:**
 ```bash
-# In the root directory
+# In the root directory (ensure GEMINI_API_KEY is exported if you want visualization features)
+export GEMINI_API_KEY="your-gemini-api-key"
 mvn clean install
 mvn spring-boot:run
 ```
@@ -143,7 +147,16 @@ To increase your limit to **5,000 requests per hour**, generate a GitHub Persona
    GITHUB_API_TOKEN=your_token_here
    ```
 If you are deploying on Cloud Run or Render, simply add `GITHUB_API_TOKEN` to your service's Environment Variables tab. The backend will automatically inject it as a Bearer token in the `Authorization` header.
+### Google Gemini API (AI Visualizations)
 
+To power the repository visualization feature, the backend accesses the `gemini-3-pro-image-preview` model via Google AI Studio. 
+
+**Setup:**
+1. Get an API Key from [Google AI Studio](https://aistudio.google.com/). *(Note: Using image generation effectively requires a key linked to a Google Cloud Billing project).*
+2. Pass it as an environment variable to the backend:
+   ```env
+   GEMINI_API_KEY=your_gemini_key_here
+   ```
 ---
 
 ## 🌐 API Endpoints
@@ -158,7 +171,10 @@ The backend exposes the following configured endpoints:
   - Or `GET /github/users/{username}/repos`
   - *Returns a list of the user's public repositories.*
 
-*(Both routes are configured to bypass arbitrary routing proxies configured by cloud hosts).*
+- `GET /api/visualize/{username}/{repo}`
+  - *Extracts the repo file tree and prompts Google Gemini to generate an architectural diagram. Returns a JSON payload containing the Base64 image data.*
+
+*(All routes are configured to bypass arbitrary routing proxies configured by cloud hosts).*
 
 ---
 
