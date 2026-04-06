@@ -63,7 +63,7 @@ public class VisualizationService {
                     return tree.stream()
                             .filter(item -> "blob".equals(item.get("type")))
                             .map(item -> (String) item.get("path"))
-                            .filter(path -> path != null && path.matches(".*\\\\.(js|jsx|ts|tsx|py|go|rs|java|c|cpp|h|hpp|cs|php|rb|swift|kt|dart|json|yaml|yml|toml|xml|html|css)") &&
+                            .filter(path -> path != null && path.matches(".*\\.(js|jsx|ts|tsx|py|go|rs|java|c|cpp|h|hpp|cs|php|rb|swift|kt|dart|json|yaml|yml|toml|xml|html|css)") &&
                                     !path.contains("node_modules") &&
                                     !path.contains("dist/") &&
                                     !path.contains("build/") &&
