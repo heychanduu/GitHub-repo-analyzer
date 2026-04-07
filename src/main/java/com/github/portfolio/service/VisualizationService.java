@@ -3,6 +3,7 @@ package com.github.portfolio.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -25,9 +26,15 @@ public class VisualizationService {
         
         this.githubWebClient = githubWebClient;
         this.geminiApiKey = geminiApiKey;
+
+        ExchangeStrategies strategies = ExchangeStrategies.builder()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                .build();
+
         this.geminiWebClient = WebClient.builder()
                 .baseUrl(geminiApiUrl)
                 .defaultHeader("Content-Type", "application/json")
+                .exchangeStrategies(strategies)
                 .build();
     }
 
