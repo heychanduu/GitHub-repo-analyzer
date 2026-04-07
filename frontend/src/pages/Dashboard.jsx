@@ -67,8 +67,8 @@ const Dashboard = () => {
         e.preventDefault();
         e.stopPropagation();
         
-        if (generationCount >= 3) {
-            alert("You have reached the maximum limit of 3 visualisations per session.");
+        if (generationCount >= 7) {
+            alert("You have reached the maximum limit of 7 visualisations per session.");
             return;
         }
         
