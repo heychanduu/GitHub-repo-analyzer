@@ -9,7 +9,7 @@ It uses a dual-architecture approach, with a highly optimized React frontend and
 - **Profile Search**: Clean, intuitive search interface to look up any GitHub username.
 - **Detailed User Insights**: Displays follower counts, following, public repositories, and key profile stats.
 - **Repository List**: Dynamically pulls the user's latest repositories, showing descriptions, stars, forks, and programming languages used.
-- **AI Repository Visualization**: Generates beautiful neon cyberpunk data flow diagrams of any repository's architecture using Google's Gemini AI.
+- **AI Repository Visualization**: Generates clear, professional software architecture data flow diagrams of any repository's structure using Google's Gemini AI.
 - **Bypass Browser Restrictions**: The backend acts as a proxy to the GitHub API, completely avoiding frontend CORS issues and allowing strict rate-limit management.
 - **Stateless Architecture**: Zero database required. The application strictly queries real-time data from GitHub, keeping the infrastructure lightweight and fast.
 - **Optimized for the Cloud**: Designed to be deployed seamlessly to Firebase Hosting (Frontend) and Google Cloud Run (Backend), with alternative support for Vercel/Render.
