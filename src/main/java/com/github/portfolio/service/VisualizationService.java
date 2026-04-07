@@ -121,12 +121,39 @@ public class VisualizationService {
                 .map(response -> {
                     try {
                         List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
+                        if (candidates == null || candidates.isEmpty()) {
+                            System.err.println("[Visualizer] No candidates in response: " + response);
+                            throw new RuntimeException("No candidates returned from Gemini.");
+                        }
+
                         Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+                        if (content == null) {
+                            System.err.println("[Visualizer] Candidate 0 has no content (possible safety block): " + candidates.get(0));
+                            throw new RuntimeException("Candidate has no content.");
+                        }
+
                         List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
-                        Map<String, Object> inlineData = (Map<String, Object>) parts.get(0).get("inlineData");
-                        return (String) inlineData.get("data");
+                        if (parts == null) {
+                            System.err.println("[Visualizer] Content has no parts.");
+                            throw new RuntimeException("Content has no parts.");
+                        }
+
+                        for (Map<String, Object> part : parts) {
+                            Map<String, Object> inlineData = (Map<String, Object>) part.get("inlineData");
+                            if (inlineData != null && inlineData.get("data") != null) {
+                                return (String) inlineData.get("data");
+                            }
+                        }
+
+                        System.err.println("[Visualizer] No inlineData found in parts: " + parts);
+                        throw new RuntimeException("No inlineData image found in Gemini response.");
+
                     } catch (Exception e) {
-                        throw new RuntimeException("Failed to parse image from Gemini response.");
+                        System.err.println("[Visualizer] Parse Exception: " + e.getMessage());
+                        if (!(e instanceof RuntimeException)) {
+                            System.err.println("[Visualizer] Full response object: " + response);
+                        }
+                        throw new RuntimeException("Failed to parse image from Gemini response: " + e.getMessage(), e);
                     }
                 });
     }
