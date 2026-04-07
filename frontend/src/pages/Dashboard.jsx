@@ -28,6 +28,7 @@ const Dashboard = () => {
     const [errorType, setErrorType] = useState(''); // '404', 'rate', 'validation', 'generic'
     const [visualizations, setVisualizations] = useState([]);
     const [visualizingRepo, setVisualizingRepo] = useState(null);
+    const [fullScreenImage, setFullScreenImage] = useState(null);
     const [generationCount, setGenerationCount] = useState(() => parseInt(sessionStorage.getItem('viz-count') || '0'));
     const [sortOrder, setSortOrder] = useState('Stars');
     const [filterLang, setFilterLang] = useState('All');
@@ -344,8 +345,15 @@ const Dashboard = () => {
                                 {visualizations.map((viz) => (
                                     <div key={viz.id} className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                         <h4 style={{ fontWeight: '600', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{viz.repoName}</h4>
-                                        <div style={{ borderRadius: '0.5rem', overflow: 'hidden', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
-                                            <img src={viz.image} alt="Visualisation" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                                        <div style={{ borderRadius: '0.5rem', overflow: 'hidden', background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px', position: 'relative' }}>
+                                            <img src={viz.image} alt="Visualisation" style={{ width: '100%', height: 'auto', display: 'block', cursor: 'zoom-in' }} onClick={() => setFullScreenImage(viz.image)} />
+                                            <button 
+                                                onClick={() => setFullScreenImage(viz.image)}
+                                                style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.4rem', borderRadius: '0.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', transition: 'all 0.2s ease' }}
+                                                title="View Fullscreen"
+                                            >
+                                                ⛶
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -447,6 +455,25 @@ const Dashboard = () => {
             >
                 ↑
             </button>
+
+            {/* Full Screen Image Modal */}
+            {fullScreenImage && (
+                <div 
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', cursor: 'zoom-out' }}
+                    onClick={() => setFullScreenImage(null)}
+                >
+                    <img src={fullScreenImage} alt="Full Screen Visualisation" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '0.5rem', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }} />
+                    <button 
+                        style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', fontSize: '2rem', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', cursor: 'pointer', transition: 'all 0.2s ease' }}
+                        onClick={(e) => { e.stopPropagation(); setFullScreenImage(null); }}
+                        onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+                        onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                        title="Close Fullscreen"
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
