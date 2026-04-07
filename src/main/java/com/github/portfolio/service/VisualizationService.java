@@ -104,8 +104,8 @@ public class VisualizationService {
 
     private Mono<String> callGemini(String repoName, List<String> files) {
         String limitedTree = String.join(", ", files);
-        String prompt = "Create a highly detailed technical logical data flow diagram infographic for GitHub repository : \"" + repoName + "\".\n" +
-                "VISUAL STYLE: Neon Cyberpunk. Dark mode cyberpunk. Black background with glowing neon pink, cyan, and violet lines and nodes.\n" +
+        String prompt = "Create a clear, professional technical architecture data flow diagram infographic for GitHub repository: \"" + repoName + "\".\n" +
+                "VISUAL STYLE: Clean, modern, professional software architecture diagram. Use a light or dark theme with clear, readable text, simple geometric shapes, and distinct logic grouping.\n" +
                 "LAYOUT: Distinct Left-to-Right flow. CENTRAL CONTAINER: Group core logic inside a clearly defined central area.\n" +
                 "Perspective: Clean 2D flat diagrammatic view straight-on. No 3D effects.\n" +
                 "Repository Context: " + limitedTree + "...\n" +
