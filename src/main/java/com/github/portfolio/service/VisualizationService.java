@@ -55,9 +55,17 @@ public class VisualizationService {
     }
 
     private Mono<List<String>> fetchRepoTree(String owner, String repo) {
-        // Try 'main' then 'master' gracefully using flatMap logic, but for simplicity we'll try main, then fallback to master.
-        return fetchTreeForBranch(owner, repo, "main")
-                .onErrorResume(e -> fetchTreeForBranch(owner, repo, "master"));
+        // Fetch the repo metadata to get the actual default branch, then use it for the tree lookup.
+        return githubWebClient.get()
+                .uri("/repos/{owner}/{repo}", owner, repo)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .map(repoData -> {
+                    String branch = (String) repoData.get("default_branch");
+                    System.out.println("[Visualizer] Detected default branch: " + branch + " for " + owner + "/" + repo);
+                    return branch != null ? branch : "main";
+                })
+                .flatMap(branch -> fetchTreeForBranch(owner, repo, branch));
     }
 
     private Mono<List<String>> fetchTreeForBranch(String owner, String repo, String branch) {
