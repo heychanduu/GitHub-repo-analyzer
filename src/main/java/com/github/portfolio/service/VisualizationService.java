@@ -85,7 +85,11 @@ public class VisualizationService {
                         ".js", ".jsx", ".ts", ".tsx", ".py", ".go", ".rs", ".java",
                         ".c", ".cpp", ".h", ".hpp", ".cs", ".php", ".rb", ".swift",
                         ".kt", ".dart", ".json", ".yaml", ".yml", ".toml", ".xml",
-                        ".html", ".css"
+                        ".html", ".css", ".scss", ".sass", ".less",
+                        ".md", ".txt", ".sh", ".bat", ".ps1",
+                        ".sql", ".r", ".R", ".m", ".lua", ".pl", ".scala",
+                        ".gradle", ".properties", ".cfg", ".ini", ".env",
+                        ".ino", ".pde"
                     );
 
                     List<String> result = tree.stream()
@@ -98,8 +102,20 @@ public class VisualizationService {
                                 if (path.contains("build/")) return false;
                                 if (path.startsWith(".")) return false;
                                 int dotIndex = path.lastIndexOf('.');
-                                if (dotIndex < 0) return false;
+                                // Files without extensions (Makefile, Dockerfile, scripts) — include them
+                                if (dotIndex < 0 || dotIndex < path.lastIndexOf('/')) return true;
                                 String ext = path.substring(dotIndex).toLowerCase();
+                                // Exclude known binary/non-code types
+                                java.util.Set<String> excludedExtensions = java.util.Set.of(
+                                    ".pdf", ".zip", ".gz", ".tar", ".rar", ".7z",
+                                    ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp", ".bmp",
+                                    ".mp4", ".mp3", ".avi", ".mov", ".wav", ".flac", ".ogg",
+                                    ".exe", ".dll", ".so", ".dylib", ".bin", ".class", ".o",
+                                    ".pptx", ".ppt", ".docx", ".doc", ".xlsx", ".xls",
+                                    ".ttf", ".otf", ".woff", ".woff2", ".eot",
+                                    ".lock", ".jar", ".war", ".pyc", ".pyo"
+                                );
+                                if (excludedExtensions.contains(ext)) return false;
                                 return validExtensions.contains(ext);
                             })
                             .limit(150)

@@ -99,7 +99,12 @@ const Dashboard = () => {
             }
         } catch (err) {
             console.error("Visualization error: ", err);
-            alert("Failed to generate visualisation: " + err.message);
+            const backendMsg = err.response?.data?.error || err.message;
+            if (backendMsg && backendMsg.includes("No suitable files")) {
+                alert("This repository doesn't contain enough recognisable code files to generate a visualisation.");
+            } else {
+                alert("Failed to generate visualisation: " + backendMsg);
+            }
         } finally {
             setVisualizingRepo(null);
         }
